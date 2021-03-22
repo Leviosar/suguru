@@ -62,6 +62,10 @@ emptyPoints board = [(board !! row) !! col | row <- [0..size], col <- [0..size],
 emptyPointsLocation :: Board -> [Location]
 emptyPointsLocation board = [(row, col) | row <- [0..size], col <- [0..size], getValue ((board !! row) !! col) == 0]
 
+-- Retorna a localização do primeiro ponto vazio do tabuleiro
+nextEmptyPointLocation :: Board -> Location
+nextEmptyPointLocation board | (emptyPointsLocation board == []) = (-1, -1)
+                             | otherwise = head (emptyPointsLocation board)
 
 -- check :: Board -> Location -> Value -> Bool
 -- check board (x, y) n = sectorHasValue board (getSector(getPoint (board (x, y)))) 1
