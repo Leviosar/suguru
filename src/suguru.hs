@@ -50,9 +50,9 @@ getSectorPoints board n = [(board !! row) !! col | row <- [0..size], col <- [0..
 
 -- Checa a existência de um ponto com o valor [value] no [sector]
 sectorHasValue :: Board -> Sector -> Value -> Bool
-sectorHasValue board sector value = null ( 
+sectorHasValue board sector value = not (null (
         [point | point <- (getSectorPoints board sector), (getValue point) /= value] 
-    )
+    ))
 
 -- Retorna todos os pontos vazios do tabuleiro
 emptyPoints :: Board -> [Point]
@@ -64,4 +64,4 @@ emptyPointsLocation board = [(row, col) | row <- [0..size], col <- [0..size], ge
 
 
 -- check :: Board -> Location -> Value -> Bool
--- check board (x, y) n = sectorHasValue board (getSector(getPoint (board (x, y)))) 1   
+-- check board (x, y) n = sectorHasValue board (getSector(getPoint (board (x, y)))) 1
