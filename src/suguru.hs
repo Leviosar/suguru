@@ -12,9 +12,6 @@ type Value = Int
 -- Um par de coordenadas X, Y
 type Location = (Int, Int)
 
--- Um par que representa a direção a ser checada em determinada posição
-type Direction = (Int, Int)
-
 -- Um ponto no tabuleiro, no formato (Value, Sector)
 type Point = (Value, Sector)
 
