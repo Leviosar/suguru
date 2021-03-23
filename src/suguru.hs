@@ -28,9 +28,7 @@ example = [ [ (0, 00), (0, 00), (0, 00), (3, 01), (0, 02), (0, 02), (2, 03), (0,
             [ (0, 10), (5, 10), (0, 12), (0, 12), (0, 12), (5, 12), (0, 11), (0, 11) ] ]
 
 main = do
-    print (check example (5,0) 2)
-    -- show board
-    -- let solutions = solve board
+    print (solve example 1)
 
 -- Retorna o setor de um ponto
 getSector :: Point -> Sector
@@ -65,10 +63,6 @@ sectorHasValue :: Board -> Sector -> Value -> Bool
 sectorHasValue board sector value = not (null (
         [point | point <- (getSectorPoints board sector), (getValue point) == value]
     ))
-
--- Retorna todos os pontos vazios do tabuleiro
-emptyPoints :: Board -> [Point]
-emptyPoints board = [(board !! row) !! col | row <- [0..size], col <- [0..size], getValue ((board !! row) !! col) == 0]
 
 -- Retorna a localização de todos os pontos vazios do tabuleiro
 emptyPointsLocation :: Board -> [Location]
@@ -106,7 +100,42 @@ checkAdjacent board target v | (((getX target) < 0) || ((getY target) < 0)) = Fa
                              | (v == (getValueFromLocation board target)) = True
                              | otherwise = False
 
+-- Copia um [Board] retornando ele com um novo [Point] na posição indicada por [Location]
+copyWithNewValue :: Board -> Location -> Point -> Board
+copyWithNewValue board location point = [ 
+    [ 
+      if getX location == row && getY location == col 
+        then point 
+      else 
+        (board !! row) !! col 
+      | col <- [0 .. size] 
+    ] | row <- [0 .. size] 
+  ]
+
+
+-- Retorna a localização anterior à localização passada 
+getPreviousLocation :: Board -> Location -> Location
+getPreviousLocation board location | ((getY location) - 1 >= 0) = (getX location, (getY location) - 1)
+                                   | otherwise = (getX location - 1, size - 1)
+
 -- Resolve o quebra-cabeças
-solve :: Board -> Board
-solve board | (nextEmptyPointLocation board == (-1, -1)) = board
+solve :: Board -> Value -> Board
+solve board value | (nextEmptyPointLocation board == (-1, -1)) = board
+              | otherwise = do
+                let location = nextEmptyPointLocation board
+                let point = getPoint board location
+                let sector = getSector point
+                let sectorPoints = getSectorPoints board sector
+
+                if value > length sectorPoints then do
+                    let newLocation = getPreviousLocation board location
+                    let newLocationValue = getValueFromLocation board newLocation + 1
+                    solve (copyWithNewValue board newLocation (newLocationValue, sector)) 1
+                else
+                    if check board location value then
+                        solve (copyWithNewValue board location (value, sector)) 1
+                    else
+                        solve board (value + 1)
+                    
+                
 
