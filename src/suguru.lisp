@@ -1,17 +1,45 @@
 ;; Board
-(setq example (make-array '(4 4)
+(setq example4 (make-array '(4 4)
     :initial-contents '(
-                       ((1 0) (0 0) (0 1) (0 1))
-                       ((2 0) (0 0) (0 2) (0 1))
-                       ((1 2) (0 2) (0 2) (0 2))
-                       ((0 2) (0 2) (0 2) (3 2))
+                         ((2 0) (0 0) (0 1) (3 1))
+                         ((0 0) (0 0) (4 1) (0 1))
+                         ((3 2) (0 2) (0 1) (0 3))
+                         ((0 2) (0 3) (0 3) (2 3))
                        )
                )
 )
 
+(setq example7 (make-array '(7 7)
+    :initial-contents '(
+                         ((2 00) (0 01) (0 02) (0 02) (0 02) (0 02) (0 03))
+                         ((0 00) (0 01) (4 01) (0 04) (0 03) (0 03) (0 03))
+                         ((0 00) (0 01) (0 01) (0 04) (0 05) (3 05) (0 03))
+                         ((0 00) (0 06) (0 07) (0 08) (0 08) (0 05) (0 05))
+                         ((0 06) (5 06) (0 06) (0 09) (2 08) (0 08) (0 05))
+                         ((2 10) (0 10) (3 06) (0 09) (0 09) (0 09) (0 09))
+                         ((0 10) (0 10) (0 11) (4 11) (0 11) (0 11) (3 11))
+                       )
+               )
+)
+
+;; Board 3
+(setq example8 (make-array '(8 8)
+    :initial-contents '(
+                         ((0 00) (0 00) (0 00) (3 01) (0 02) (0 02) (2 03) (0 03))
+                         ((4 00) (0 04) (0 04) (0 01) (0 02) (0 02) (0 03) (0 03))
+                         ((0 04) (2 04) (0 01) (0 01) (0 02) (0 05) (0 05) (0 03))
+                         ((0 04) (1 06) (5 06) (0 01) (0 07) (1 07) (5 05) (0 05))
+                         ((0 08) (2 08) (0 06) (0 06) (0 07) (0 09) (0 09) (0 05))
+                         ((0 10) (0 08) (0 08) (0 06) (4 07) (0 11) (0 09) (4 09))
+                         ((0 10) (0 10) (0 08) (0 12) (0 07) (3 11) (0 11) (0 09))
+                         ((0 10) (5 10) (0 12) (0 12) (0 12) (5 12) (0 11) (0 11))
+                       )
+              )
+)
+
 ;; Verifica se as coordenadas são válidas para determinado board
 (defun invalidCoordinates (board row column)
-    (defvar size (array-dimension board 0))
+    (setq size (array-dimension board 0))
 
     (or
       (< row 0)
@@ -57,17 +85,25 @@
     (getValue (getPoint board row column))
 )
 
+;; Pega a localização anterior a determinada localização
+(defun getPreviousLocation (board location)
+    (if (>= (- (getColumn location) 1) 0)
+      (list (getRow location) (- (getColumn location) 1))
+    (list (- (getRow location) 1) (- (array-dimension board 0) 1))
+    )
+)
+
 ;; Altera o valor de determinado ponto no board
 (defun changeValue (board row column v)
-    (defvar newPoint (list v (getSector (getPoint board row column))))
+    (setq newPoint (list v (getSector (getPoint board row column))))
 
     (setf (aref board row column) newPoint)
 )
 
 ;; Pega os pontos de um setor
 (defun getSectorPoints (board sector)
-    (defvar size (array-dimension board 0))
-    (defvar points ())
+    (setq size (array-dimension board 0))
+    (setq points ())
 
       (dotimes (row size)
         (dotimes (column size)
@@ -85,7 +121,7 @@
 
 ;; Verifica se o setor tem determinado valor
 (defun sectorHasValue (board sector value)
-    (defvar sectorPoints (getSectorPoints board sector))
+    (setq sectorPoints (getSectorPoints board sector))
     
     (dotimes (i (length sectorPoints))
       (setq point (nth i sectorPoints))
@@ -100,7 +136,7 @@
 ;; Pega a posição do próximo ponto vazio, caso não existam mais
 ;; pontos vazio, retorna (-1 -1)
 (defun nextEmptyPoint (board)
-    (defvar size (array-dimension board 0))
+    (setq size (array-dimension board 0))
     
     (dotimes (row size)
       (dotimes (column size)
@@ -151,22 +187,86 @@
     )
 )
 
+;; Pega locais válidos para serem alterados no board
+(defun validPlaces (board)
+    (setq size (array-dimension board 0))
+    (setq places ())
+
+    (dotimes (row size)
+      (dotimes (column size)
+        (setq point (aref board row column))
+        (if (= (getValue point) 0)
+          (push (list row column) places)
+        )
+      )
+    )
+    places
+)
+
+;; Verifica se um ponto está numa lista
+(defun pointInList (point validPoints)
+
+    (dotimes (i (length validPoints))
+      (setq validPoint (nth i validPoints))
+
+      (if (and (= (getRow validPoint) (getRow point))
+               (= (getColumn validPoint) (getColumn point))
+          )
+        (return-from pointInList T)
+      )
+    )
+    NIL
+)
+
+;; Pega o valor anterior ao ponto que pode ser alterado
+(defun findPreviousValidPlace (board currentLocation validLocations)
+    (setq size (expt (array-dimension board 0) 2))
+    (setq previous (getPreviousLocation board currentLocation))
+
+    (dotimes (i size)
+      (if (pointInList previous validLocations)
+        (return-from findPreviousValidPlace previous)
+       (setq previous (getPreviousLocation board previous))
+      )
+    )
+)
+
 ;; Resolve o puzzle
 (defun solve (board v)
-    (defvar emptyLocation (nextEmptyPoint board))
-    (defvar point (getPointFromLocation board emptyLocation))
-    (defvar sector (getSector point))
-    (defvar sectorPoints (getSectorPoints board sector))
+    (defvar validLocations (validPlaces board))
 
-    (defvar maxValue (length sectorPoints))
-
+    (setq emptyLocation (nextEmptyPoint board))
 
     ;; O puzzle está resolvido
     (if (< (car emptyLocation) 0)
       (return-from solve board)
     )
 
+    (setq point (getPointFromLocation board emptyLocation))
+    (setq sector (getSector point))
+    (setq sectorPoints (getSectorPoints board sector))
+
+    (setq maxValue (length sectorPoints))
+
+    (if (> v maxValue)
+      (progn
+        (setq validPlace (findPreviousValidPlace board emptyLocation validLocations))
+        (setq newLocationValue (+ (getValueFromLocation board (getRow validPlace) (getColumn validPlace)) 1))
+
+        (changeValue board (getRow validPlace) (getColumn validPlace) 0)
+
+        (solve board newLocationValue)
+      )
+    ;; else
+      (if (check board (getRow emptyLocation) (getColumn emptyLocation) v)
+        (progn
+          (changeValue board (getRow emptyLocation) (getColumn emptyLocation) v)
+          (solve board 1)
+        )
+
+        (solve board (+ v 1))
+      )
+    )
 )
 
-(print (solve example 1))
-
+(print (solve example7 1))
